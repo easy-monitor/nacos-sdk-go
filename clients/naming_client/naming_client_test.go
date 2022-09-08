@@ -17,6 +17,7 @@
 package naming_client
 
 import (
+	"context"
 	"net/http"
 	"testing"
 
@@ -68,7 +69,7 @@ func Test_RegisterServiceInstance_withoutGroupName(t *testing.T) {
 	_ = nc.SetServerConfig([]constant.ServerConfig{serverConfigTest})
 	_ = nc.SetClientConfig(clientConfigTest)
 	_ = nc.SetHttpAgent(mockIHttpAgent)
-	client, _ := NewNamingClient(&nc)
+	client, _ := NewNamingClient(context.Background(), &nc)
 	success, err := client.RegisterInstance(vo.RegisterInstanceParam{
 		ServiceName: "DEMO",
 		Ip:          "10.0.0.10",
@@ -110,7 +111,7 @@ func Test_RegisterServiceInstance_withGroupName(t *testing.T) {
 	_ = nc.SetServerConfig([]constant.ServerConfig{serverConfigTest})
 	_ = nc.SetClientConfig(clientConfigTest)
 	_ = nc.SetHttpAgent(mockIHttpAgent)
-	client, _ := NewNamingClient(&nc)
+	client, _ := NewNamingClient(context.Background(), &nc)
 	success, err := client.RegisterInstance(vo.RegisterInstanceParam{
 		ServiceName: "DEMO2",
 		Ip:          "10.0.0.10",
@@ -153,7 +154,7 @@ func Test_RegisterServiceInstance_withCluster(t *testing.T) {
 	_ = nc.SetServerConfig([]constant.ServerConfig{serverConfigTest})
 	_ = nc.SetClientConfig(clientConfigTest)
 	_ = nc.SetHttpAgent(mockIHttpAgent)
-	client, _ := NewNamingClient(&nc)
+	client, _ := NewNamingClient(context.Background(), &nc)
 	success, err := client.RegisterInstance(vo.RegisterInstanceParam{
 		ServiceName: "DEMO3",
 		Ip:          "10.0.0.10",
@@ -197,7 +198,7 @@ func Test_RegisterServiceInstance_401(t *testing.T) {
 	_ = nc.SetServerConfig([]constant.ServerConfig{serverConfigTest})
 	_ = nc.SetClientConfig(clientConfigTest)
 	_ = nc.SetHttpAgent(mockIHttpAgent)
-	client, _ := NewNamingClient(&nc)
+	client, _ := NewNamingClient(context.Background(), &nc)
 	result, err := client.RegisterInstance(vo.RegisterInstanceParam{
 		ServiceName: "DEMO4",
 		Ip:          "10.0.0.10",
@@ -233,7 +234,7 @@ func TestNamingProxy_DeregisterService_WithoutGroupName(t *testing.T) {
 	_ = nc.SetServerConfig([]constant.ServerConfig{serverConfigTest})
 	_ = nc.SetClientConfig(clientConfigTest)
 	_ = nc.SetHttpAgent(mockIHttpAgent)
-	client, _ := NewNamingClient(&nc)
+	client, _ := NewNamingClient(context.Background(), &nc)
 	_, _ = client.DeregisterInstance(vo.DeregisterInstanceParam{
 		ServiceName: "DEMO5",
 		Ip:          "10.0.0.10",
@@ -266,7 +267,7 @@ func TestNamingProxy_DeregisterService_WithGroupName(t *testing.T) {
 	_ = nc.SetServerConfig([]constant.ServerConfig{serverConfigTest})
 	_ = nc.SetClientConfig(clientConfigTest)
 	_ = nc.SetHttpAgent(mockIHttpAgent)
-	client, _ := NewNamingClient(&nc)
+	client, _ := NewNamingClient(context.Background(), &nc)
 	_, _ = client.DeregisterInstance(vo.DeregisterInstanceParam{
 		ServiceName: "DEMO6",
 		Ip:          "10.0.0.10",
@@ -302,7 +303,7 @@ func Test_UpdateServiceInstance_withoutGroupName(t *testing.T) {
 	_ = nc.SetServerConfig([]constant.ServerConfig{serverConfigTest})
 	_ = nc.SetClientConfig(clientConfigTest)
 	_ = nc.SetHttpAgent(mockIHttpAgent)
-	client, _ := NewNamingClient(&nc)
+	client, _ := NewNamingClient(context.Background(), &nc)
 	success, err := client.UpdateInstance(vo.UpdateInstanceParam{
 		ServiceName: "DEMO",
 		Ip:          "10.0.0.10",
@@ -338,7 +339,7 @@ func TestNamingProxy_DeregisterService_401(t *testing.T) {
 	_ = nc.SetServerConfig([]constant.ServerConfig{serverConfigTest})
 	_ = nc.SetClientConfig(clientConfigTest)
 	_ = nc.SetHttpAgent(mockIHttpAgent)
-	client, _ := NewNamingClient(&nc)
+	client, _ := NewNamingClient(context.Background(), &nc)
 	_, _ = client.DeregisterInstance(vo.DeregisterInstanceParam{
 		ServiceName: "DEMO7",
 		Ip:          "10.0.0.10",
@@ -433,7 +434,7 @@ func TestNamingClient_SelectOneHealthyInstance_SameWeight(t *testing.T) {
 	_ = nc.SetServerConfig([]constant.ServerConfig{serverConfigTest})
 	_ = nc.SetClientConfig(clientConfigTest)
 	_ = nc.SetHttpAgent(mockIHttpAgent)
-	client, _ := NewNamingClient(&nc)
+	client, _ := NewNamingClient(context.Background(), &nc)
 	instance1, err := client.selectOneHealthyInstances(services)
 	assert.Nil(t, err)
 	assert.NotNil(t, instance1)
@@ -461,7 +462,7 @@ func TestNamingClient_SelectOneHealthyInstance_Empty(t *testing.T) {
 	_ = nc.SetServerConfig([]constant.ServerConfig{serverConfigTest})
 	_ = nc.SetClientConfig(clientConfigTest)
 	_ = nc.SetHttpAgent(mockIHttpAgent)
-	client, _ := NewNamingClient(&nc)
+	client, _ := NewNamingClient(context.Background(), &nc)
 	instance, err := client.selectOneHealthyInstances(services)
 	assert.NotNil(t, err)
 	assert.Nil(t, instance)
@@ -552,7 +553,7 @@ func TestNamingClient_SelectInstances_Healthy(t *testing.T) {
 	_ = nc.SetServerConfig([]constant.ServerConfig{serverConfigTest})
 	_ = nc.SetClientConfig(clientConfigTest)
 	_ = nc.SetHttpAgent(mockIHttpAgent)
-	client, _ := NewNamingClient(&nc)
+	client, _ := NewNamingClient(context.Background(), &nc)
 	instances, err := client.selectInstances(services, true)
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(instances))
@@ -643,7 +644,7 @@ func TestNamingClient_SelectInstances_Unhealthy(t *testing.T) {
 	_ = nc.SetServerConfig([]constant.ServerConfig{serverConfigTest})
 	_ = nc.SetClientConfig(clientConfigTest)
 	_ = nc.SetHttpAgent(mockIHttpAgent)
-	client, _ := NewNamingClient(&nc)
+	client, _ := NewNamingClient(context.Background(), &nc)
 	instances, err := client.selectInstances(services, false)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(instances))
@@ -668,7 +669,7 @@ func TestNamingClient_SelectInstances_Empty(t *testing.T) {
 	_ = nc.SetServerConfig([]constant.ServerConfig{serverConfigTest})
 	_ = nc.SetClientConfig(clientConfigTest)
 	_ = nc.SetHttpAgent(mockIHttpAgent)
-	client, _ := NewNamingClient(&nc)
+	client, _ := NewNamingClient(context.Background(), &nc)
 	instances, err := client.selectInstances(services, false)
 	assert.NotNil(t, err)
 	assert.Equal(t, 0, len(instances))
@@ -679,7 +680,7 @@ func TestNamingClient_GetAllServicesInfo(t *testing.T) {
 	_ = nc.SetServerConfig([]constant.ServerConfig{serverConfigTest})
 	_ = nc.SetClientConfig(clientConfigTest)
 	_ = nc.SetHttpAgent(&http_agent.HttpAgent{})
-	client, _ := NewNamingClient(&nc)
+	client, _ := NewNamingClient(context.Background(), &nc)
 	reslut, err := client.GetAllServicesInfo(vo.GetAllServiceInfoParam{
 		GroupName: "DEFAULT_GROUP",
 		PageNo:    1,
@@ -710,7 +711,7 @@ func TestNamingClient_selectOneHealthyInstanceResult(t *testing.T) {
 	nc := nacos_client.NacosClient{}
 	_ = nc.SetServerConfig([]constant.ServerConfig{serverConfigTest})
 	_ = nc.SetClientConfig(clientConfigTest)
-	client, _ := NewNamingClient(&nc)
+	client, _ := NewNamingClient(context.Background(), &nc)
 	for i := 0; i < 10; i++ {
 		_, _ = client.selectOneHealthyInstances(services)
 	}

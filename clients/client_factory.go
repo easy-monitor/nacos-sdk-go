@@ -17,6 +17,7 @@
 package clients
 
 import (
+	"context"
 	"errors"
 
 	"github.com/nacos-group/nacos-sdk-go/clients/config_client"
@@ -36,7 +37,7 @@ func CreateConfigClient(properties map[string]interface{}) (iClient config_clien
 //CreateNamingClient use to create a nacos naming client
 func CreateNamingClient(properties map[string]interface{}) (iClient naming_client.INamingClient, err error) {
 	param := getConfigParam(properties)
-	return NewNamingClient(param)
+	return NewNamingClient(context.Background(), param)
 }
 
 func NewConfigClient(param vo.NacosClientParam) (iClient config_client.IConfigClient, err error) {
@@ -52,12 +53,12 @@ func NewConfigClient(param vo.NacosClientParam) (iClient config_client.IConfigCl
 	return
 }
 
-func NewNamingClient(param vo.NacosClientParam) (iClient naming_client.INamingClient, err error) {
+func NewNamingClient(ctx context.Context, param vo.NacosClientParam) (iClient naming_client.INamingClient, err error) {
 	nacosClient, err := setConfig(param)
 	if err != nil {
 		return
 	}
-	naming, err := naming_client.NewNamingClient(nacosClient)
+	naming, err := naming_client.NewNamingClient(ctx, nacosClient)
 	if err != nil {
 		return
 	}

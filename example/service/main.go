@@ -17,6 +17,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -63,7 +64,9 @@ func main() {
 	)
 
 	// a more graceful way to create naming client
-	client, err := clients.NewNamingClient(
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	client, err := clients.NewNamingClient(ctx,
 		vo.NacosClientParam{
 			ClientConfig:  &cc,
 			ServerConfigs: sc,
@@ -275,4 +278,8 @@ func main() {
 		PageNo:    1,
 		PageSize:  10,
 	})
+
+	for {
+
+	}
 }
