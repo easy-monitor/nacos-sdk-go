@@ -154,10 +154,12 @@ func GetLogger() Logger {
 	return logger
 }
 
+var commonLogger = &lumberjack.Logger{}
+
 // getLogWriter get Lumberjack writer by LumberjackConfig
 func (c *Config) getLogWriter() zapcore.WriteSyncer {
 	if c.LogRollingConfig == nil {
-		c.LogRollingConfig = &lumberjack.Logger{}
+		c.LogRollingConfig = commonLogger
 	}
 	c.LogRollingConfig.Filename = c.LogDir + string(os.PathSeparator) + c.LogFileName
 	if c.LogStdout {

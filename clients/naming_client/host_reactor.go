@@ -64,7 +64,7 @@ func NewHostReactor(ctx context.Context, serviceProxy NamingProxy, cacheDir stri
 	if !notLoadCacheAtStart {
 		hr.loadCacheFromDisk()
 	}
-	go hr.asyncUpdateService(ctx)
+	//go hr.asyncUpdateService(ctx)
 	return hr
 }
 

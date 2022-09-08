@@ -51,7 +51,7 @@ func NewPushReceiver(ctx context.Context, hostReactor *HostReactor) *PushReceive
 	pr := PushReceiver{
 		hostReactor: hostReactor,
 	}
-	pr.startServer(ctx)
+	//pr.startServer(ctx)
 	return &pr
 }
 
