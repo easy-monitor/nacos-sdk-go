@@ -17,6 +17,7 @@
 package naming_client
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -45,7 +46,7 @@ type HostReactor struct {
 
 const Default_Update_Thread_Num = 20
 
-func NewHostReactor(serviceProxy NamingProxy, cacheDir string, updateThreadNum int, notLoadCacheAtStart bool, subCallback SubscribeCallback, updateCacheWhenEmpty bool) HostReactor {
+func NewHostReactor(ctx context.Context, serviceProxy NamingProxy, cacheDir string, updateThreadNum int, notLoadCacheAtStart bool, subCallback SubscribeCallback, updateCacheWhenEmpty bool) HostReactor {
 	if updateThreadNum <= 0 {
 		updateThreadNum = Default_Update_Thread_Num
 	}
@@ -58,12 +59,12 @@ func NewHostReactor(serviceProxy NamingProxy, cacheDir string, updateThreadNum i
 		updateTimeMap:        cache.NewConcurrentMap(),
 		updateCacheWhenEmpty: updateCacheWhenEmpty,
 	}
-	pr := NewPushReceiver(&hr)
+	pr := NewPushReceiver(ctx, &hr)
 	hr.pushReceiver = *pr
 	if !notLoadCacheAtStart {
 		hr.loadCacheFromDisk()
 	}
-	go hr.asyncUpdateService()
+	go hr.asyncUpdateService(ctx)
 	return hr
 }
 
@@ -156,24 +157,29 @@ func (hr *HostReactor) updateServiceNow(serviceName, clusters string) {
 	hr.ProcessServiceJson(result)
 }
 
-func (hr *HostReactor) asyncUpdateService() {
+func (hr *HostReactor) asyncUpdateService(ctx context.Context) {
 	sema := util.NewSemaphore(hr.updateThreadNum)
 	for {
-		for _, v := range hr.serviceInfoMap.Items() {
-			service := v.(model.Service)
-			lastRefTime, ok := hr.updateTimeMap.Get(util.GetServiceCacheKey(service.Name, service.Clusters))
-			if !ok {
-				lastRefTime = uint64(0)
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			for _, v := range hr.serviceInfoMap.Items() {
+				service := v.(model.Service)
+				lastRefTime, ok := hr.updateTimeMap.Get(util.GetServiceCacheKey(service.Name, service.Clusters))
+				if !ok {
+					lastRefTime = uint64(0)
+				}
+				if uint64(util.CurrentMillis())-lastRefTime.(uint64) > service.CacheMillis {
+					sema.Acquire()
+					go func() {
+						hr.updateServiceNow(service.Name, service.Clusters)
+						sema.Release()
+					}()
+				}
 			}
-			if uint64(util.CurrentMillis())-lastRefTime.(uint64) > service.CacheMillis {
-				sema.Acquire()
-				go func() {
-					hr.updateServiceNow(service.Name, service.Clusters)
-					sema.Release()
-				}()
-			}
+			time.Sleep(1 * time.Second)
 		}
-		time.Sleep(1 * time.Second)
 	}
 }
 

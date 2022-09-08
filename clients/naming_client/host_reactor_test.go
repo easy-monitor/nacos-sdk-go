@@ -17,6 +17,7 @@
 package naming_client
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"testing"
@@ -39,7 +40,7 @@ func TestHostReactor_GetServiceInfo(t *testing.T) {
 	_ = nc.SetServerConfig([]constant.ServerConfig{serverConfigTest})
 	_ = nc.SetClientConfig(clientConfigTest)
 	_ = nc.SetHttpAgent(&http_agent.HttpAgent{})
-	client, _ := NewNamingClient(&nc)
+	client, _ := NewNamingClient(context.Background(), &nc)
 	param := vo.RegisterInstanceParam{
 		Ip:          "10.0.0.11",
 		Port:        8848,
@@ -64,7 +65,7 @@ func TestHostReactor_GetServiceInfoErr(t *testing.T) {
 	_ = nc.SetServerConfig([]constant.ServerConfig{serverConfigTest})
 	_ = nc.SetClientConfig(clientConfigTest)
 	_ = nc.SetHttpAgent(&http_agent.HttpAgent{})
-	client, _ := NewNamingClient(&nc)
+	client, _ := NewNamingClient(context.Background(), &nc)
 	param := vo.RegisterInstanceParam{
 		Ip:          "10.0.0.11",
 		Port:        8848,

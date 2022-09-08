@@ -19,6 +19,7 @@ package naming_client
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"math/rand"
@@ -46,11 +47,11 @@ var (
 	GZIP_MAGIC = []byte("\x1F\x8B")
 )
 
-func NewPushReceiver(hostReactor *HostReactor) *PushReceiver {
+func NewPushReceiver(ctx context.Context, hostReactor *HostReactor) *PushReceiver {
 	pr := PushReceiver{
 		hostReactor: hostReactor,
 	}
-	pr.startServer()
+	pr.startServer(ctx)
 	return &pr
 }
 
@@ -88,7 +89,7 @@ func (us *PushReceiver) getConn() *net.UDPConn {
 	return nil
 }
 
-func (us *PushReceiver) startServer() {
+func (us *PushReceiver) startServer(ctx context.Context) {
 	conn := us.getConn()
 	if conn == nil {
 		return
@@ -96,7 +97,12 @@ func (us *PushReceiver) startServer() {
 	go func() {
 		defer conn.Close()
 		for {
-			us.handleClient(conn)
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				us.handleClient(conn)
+			}
 		}
 	}()
 }
