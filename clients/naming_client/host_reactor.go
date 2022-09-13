@@ -41,6 +41,8 @@ type HostReactor struct {
 	subCallback          SubscribeCallback
 	updateTimeMap        cache.ConcurrentMap
 	updateCacheWhenEmpty bool
+
+	closeChan chan struct{}
 }
 
 const Default_Update_Thread_Num = 20
@@ -57,6 +59,7 @@ func NewHostReactor(serviceProxy NamingProxy, cacheDir string, updateThreadNum i
 		subCallback:          subCallback,
 		updateTimeMap:        cache.NewConcurrentMap(),
 		updateCacheWhenEmpty: updateCacheWhenEmpty,
+		closeChan:            make(chan struct{}),
 	}
 	pr := NewPushReceiver(&hr)
 	hr.pushReceiver = *pr
@@ -159,22 +162,31 @@ func (hr *HostReactor) updateServiceNow(serviceName, clusters string) {
 func (hr *HostReactor) asyncUpdateService() {
 	sema := util.NewSemaphore(hr.updateThreadNum)
 	for {
-		for _, v := range hr.serviceInfoMap.Items() {
-			service := v.(model.Service)
-			lastRefTime, ok := hr.updateTimeMap.Get(util.GetServiceCacheKey(service.Name, service.Clusters))
-			if !ok {
-				lastRefTime = uint64(0)
+		select {
+		case <-hr.closeChan:
+			return
+		default:
+			for _, v := range hr.serviceInfoMap.Items() {
+				service := v.(model.Service)
+				lastRefTime, ok := hr.updateTimeMap.Get(util.GetServiceCacheKey(service.Name, service.Clusters))
+				if !ok {
+					lastRefTime = uint64(0)
+				}
+				if uint64(util.CurrentMillis())-lastRefTime.(uint64) > service.CacheMillis {
+					sema.Acquire()
+					go func() {
+						hr.updateServiceNow(service.Name, service.Clusters)
+						sema.Release()
+					}()
+				}
 			}
-			if uint64(util.CurrentMillis())-lastRefTime.(uint64) > service.CacheMillis {
-				sema.Acquire()
-				go func() {
-					hr.updateServiceNow(service.Name, service.Clusters)
-					sema.Release()
-				}()
-			}
+			time.Sleep(1 * time.Second)
 		}
-		time.Sleep(1 * time.Second)
 	}
+}
+
+func (hr *HostReactor) Close() {
+	hr.pushReceiver.conn.Close()
 }
 
 // return true when service instance changed ,otherwise return false.

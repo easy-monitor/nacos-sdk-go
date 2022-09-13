@@ -91,7 +91,7 @@ func init() {
 }
 
 // InitLogger is init global logger for nacos
-func InitLogger(config Config) (err error) {
+func InitLogger(config *Config) (err error) {
 	l, err := initNacosLogger(config)
 	if err != nil {
 		return err
@@ -101,7 +101,7 @@ func InitLogger(config Config) (err error) {
 }
 
 // InitNacosLogger is init nacos default logger
-func initNacosLogger(config Config) (Logger, error) {
+func initNacosLogger(config *Config) (Logger, error) {
 	if config.CustomLogger != nil {
 		return &NacosLogger{config.CustomLogger}, nil
 	}
@@ -154,10 +154,12 @@ func GetLogger() Logger {
 	return logger
 }
 
+var commonLogger = &lumberjack.Logger{}
+
 // getLogWriter get Lumberjack writer by LumberjackConfig
 func (c *Config) getLogWriter() zapcore.WriteSyncer {
 	if c.LogRollingConfig == nil {
-		c.LogRollingConfig = &lumberjack.Logger{}
+		c.LogRollingConfig = commonLogger
 	}
 	c.LogRollingConfig.Filename = c.LogDir + string(os.PathSeparator) + c.LogFileName
 	if c.LogStdout {

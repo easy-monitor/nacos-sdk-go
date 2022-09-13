@@ -103,4 +103,7 @@ type INamingClient interface {
 
 	//GetAllServicesInfo use to get all service info by page
 	GetAllServicesInfo(param vo.GetAllServiceInfoParam) (model.ServiceList, error)
+
+	//CloseClient close the client
+	CloseClient()
 }

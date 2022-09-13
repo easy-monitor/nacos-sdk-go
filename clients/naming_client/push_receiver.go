@@ -34,6 +34,7 @@ type PushReceiver struct {
 	port        int
 	host        string
 	hostReactor *HostReactor
+	conn        *net.UDPConn
 }
 
 type PushData struct {
@@ -50,7 +51,9 @@ func NewPushReceiver(hostReactor *HostReactor) *PushReceiver {
 	pr := PushReceiver{
 		hostReactor: hostReactor,
 	}
-	pr.startServer()
+	conn := pr.getConn()
+	pr.conn = conn
+	pr.startServer(conn)
 	return &pr
 }
 
@@ -88,34 +91,37 @@ func (us *PushReceiver) getConn() *net.UDPConn {
 	return nil
 }
 
-func (us *PushReceiver) startServer() {
-	conn := us.getConn()
+func (us *PushReceiver) startServer(conn *net.UDPConn) {
 	if conn == nil {
 		return
 	}
 	go func() {
 		defer conn.Close()
 		for {
-			us.handleClient(conn)
+			err := us.handleClient(conn)
+			if err != nil {
+				us.hostReactor.closeChan <- struct{}{}
+				return
+			}
 		}
 	}()
 }
 
-func (us *PushReceiver) handleClient(conn *net.UDPConn) {
+func (us *PushReceiver) handleClient(conn *net.UDPConn) error {
 
 	if conn == nil {
 		time.Sleep(time.Second * 5)
 		conn = us.getConn()
 		if conn == nil {
-			return
+			return nil
 		}
 	}
 
 	data := make([]byte, 4024)
 	n, remoteAddr, err := conn.ReadFromUDP(data)
 	if err != nil {
-		logger.Errorf("failed to read UDP msg because of %+v", err)
-		return
+		logger.Warnf("failed to read UDP msg because of %+v", err)
+		return err
 	}
 
 	s := TryDecompressData(data[:n])
@@ -125,7 +131,7 @@ func (us *PushReceiver) handleClient(conn *net.UDPConn) {
 	err1 := json.Unmarshal([]byte(s), &pushData)
 	if err1 != nil {
 		logger.Infof("failed to process push data.err:%+v", err1)
-		return
+		return err1
 	}
 	ack := make(map[string]string)
 
@@ -150,7 +156,9 @@ func (us *PushReceiver) handleClient(conn *net.UDPConn) {
 	c, err := conn.WriteToUDP(bs, remoteAddr)
 	if err != nil {
 		logger.Errorf("WriteToUDP failed,return:%d,err:%+v", c, err)
+		return err
 	}
+	return nil
 }
 
 func TryDecompressData(data []byte) string {
