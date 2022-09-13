@@ -17,6 +17,7 @@
 package naming_client
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -47,7 +48,7 @@ type HostReactor struct {
 
 const Default_Update_Thread_Num = 20
 
-func NewHostReactor(serviceProxy NamingProxy, cacheDir string, updateThreadNum int, notLoadCacheAtStart bool, subCallback SubscribeCallback, updateCacheWhenEmpty bool) HostReactor {
+func NewHostReactor(ctx context.Context, serviceProxy NamingProxy, cacheDir string, updateThreadNum int, notLoadCacheAtStart bool, subCallback SubscribeCallback, updateCacheWhenEmpty bool) HostReactor {
 	if updateThreadNum <= 0 {
 		updateThreadNum = Default_Update_Thread_Num
 	}
@@ -61,12 +62,12 @@ func NewHostReactor(serviceProxy NamingProxy, cacheDir string, updateThreadNum i
 		updateCacheWhenEmpty: updateCacheWhenEmpty,
 		closeChan:            make(chan struct{}),
 	}
-	pr := NewPushReceiver(&hr)
+	pr := NewPushReceiver(ctx, &hr)
 	hr.pushReceiver = *pr
 	if !notLoadCacheAtStart {
 		hr.loadCacheFromDisk()
 	}
-	go hr.asyncUpdateService()
+	go hr.asyncUpdateService(ctx)
 	return hr
 }
 
@@ -159,7 +160,7 @@ func (hr *HostReactor) updateServiceNow(serviceName, clusters string) {
 	hr.ProcessServiceJson(result)
 }
 
-func (hr *HostReactor) asyncUpdateService() {
+func (hr *HostReactor) asyncUpdateService(ctx context.Context) {
 	sema := util.NewSemaphore(hr.updateThreadNum)
 	for {
 		select {

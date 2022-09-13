@@ -19,6 +19,7 @@ package naming_client
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"math/rand"
@@ -47,7 +48,7 @@ var (
 	GZIP_MAGIC = []byte("\x1F\x8B")
 )
 
-func NewPushReceiver(hostReactor *HostReactor) *PushReceiver {
+func NewPushReceiver(ctx context.Context, hostReactor *HostReactor) *PushReceiver {
 	pr := PushReceiver{
 		hostReactor: hostReactor,
 	}

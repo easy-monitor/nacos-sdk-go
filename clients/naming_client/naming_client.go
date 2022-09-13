@@ -17,6 +17,7 @@
 package naming_client
 
 import (
+	"context"
 	"math"
 	"math/rand"
 	"os"
@@ -53,7 +54,7 @@ type Chooser struct {
 	max    int
 }
 
-func NewNamingClient(nc nacos_client.INacosClient) (NamingClient, error) {
+func NewNamingClient(ctx context.Context, nc nacos_client.INacosClient) (NamingClient, error) {
 	rand.Seed(time.Now().UnixNano())
 	naming := NamingClient{INacosClient: nc}
 	clientConfig, err := nc.GetClientConfig()
@@ -88,7 +89,7 @@ func NewNamingClient(nc nacos_client.INacosClient) (NamingClient, error) {
 	if err != nil {
 		return naming, err
 	}
-	naming.hostReactor = NewHostReactor(naming.serviceProxy, clientConfig.CacheDir+string(os.PathSeparator)+"naming",
+	naming.hostReactor = NewHostReactor(ctx, naming.serviceProxy, clientConfig.CacheDir+string(os.PathSeparator)+"naming",
 		clientConfig.UpdateThreadNum, clientConfig.NotLoadCacheAtStart, naming.subCallback, clientConfig.UpdateCacheWhenEmpty)
 	naming.beatReactor = NewBeatReactor(naming.serviceProxy, clientConfig.BeatInterval)
 	naming.indexMap = cache.NewConcurrentMap()
