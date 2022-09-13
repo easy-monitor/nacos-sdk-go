@@ -42,6 +42,8 @@ type HostReactor struct {
 	subCallback          SubscribeCallback
 	updateTimeMap        cache.ConcurrentMap
 	updateCacheWhenEmpty bool
+
+	closeChan chan struct{}
 }
 
 const Default_Update_Thread_Num = 20
@@ -58,6 +60,7 @@ func NewHostReactor(ctx context.Context, serviceProxy NamingProxy, cacheDir stri
 		subCallback:          subCallback,
 		updateTimeMap:        cache.NewConcurrentMap(),
 		updateCacheWhenEmpty: updateCacheWhenEmpty,
+		closeChan:            make(chan struct{}),
 	}
 	pr := NewPushReceiver(ctx, &hr)
 	hr.pushReceiver = *pr
@@ -161,7 +164,7 @@ func (hr *HostReactor) asyncUpdateService(ctx context.Context) {
 	sema := util.NewSemaphore(hr.updateThreadNum)
 	for {
 		select {
-		case <-ctx.Done():
+		case <-hr.closeChan:
 			return
 		default:
 			for _, v := range hr.serviceInfoMap.Items() {
@@ -181,6 +184,10 @@ func (hr *HostReactor) asyncUpdateService(ctx context.Context) {
 			time.Sleep(1 * time.Second)
 		}
 	}
+}
+
+func (hr *HostReactor) Close() {
+	hr.pushReceiver.conn.Close()
 }
 
 // return true when service instance changed ,otherwise return false.

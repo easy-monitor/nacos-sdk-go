@@ -44,6 +44,8 @@ type NamingClient struct {
 	beatReactor  BeatReactor
 	indexMap     cache.ConcurrentMap
 	NamespaceId  string
+
+	loggerConfig *logger.Config
 }
 
 type Chooser struct {
@@ -77,7 +79,7 @@ func NewNamingClient(ctx context.Context, nc nacos_client.INacosClient) (NamingC
 		CustomLogger:     clientConfig.CustomLogger,
 		LogStdout:        clientConfig.AppendToStdout,
 	}
-	err = logger.InitLogger(loggerConfig)
+	err = logger.InitLogger(&loggerConfig)
 	if err != nil {
 		return naming, err
 	}
@@ -348,4 +350,9 @@ func (sc *NamingClient) Subscribe(param *vo.SubscribeParam) error {
 func (sc *NamingClient) Unsubscribe(param *vo.SubscribeParam) error {
 	sc.subCallback.RemoveCallbackFuncs(util.GetGroupName(param.ServiceName, param.GroupName), strings.Join(param.Clusters, ","), &param.SubscribeCallback)
 	return nil
+}
+
+//CloseClient close the client
+func (sc *NamingClient) CloseClient() {
+	sc.hostReactor.Close()
 }
